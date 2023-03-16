@@ -14,6 +14,9 @@ def compute_discriminator_loss(
     TODO 1.5.1: Implement WGAN-GP loss for discriminator.
     loss = E[D(fake_data)] - E[D(real_data)] + lambda * E[(|| grad wrt interpolated_data (D(interpolated_data))|| - 1)^2]
     """
+    interp_grad = interp.grad
+    grad_penalty = (torch.norm(interp_grad, p=2, dim=(1, 2, 3)) - 1) ** 2
+    loss = discrim_fake.mean() - discrim_real.mean() + (lamb * grad_penalty.mean())
     return loss
 
 
@@ -22,6 +25,7 @@ def compute_generator_loss(discrim_fake):
     TODO 1.5.1: Implement WGAN-GP loss for generator.
     loss = - E[D(fake_data)]
     """
+    loss = -discrim_fake.mean()
     return loss
 
 
