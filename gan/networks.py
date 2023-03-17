@@ -27,7 +27,7 @@ class UpSampleConv2D(torch.jit.ScriptModule):
         # 2. Use pixel shuffle (https://pytorch.org/docs/master/generated/torch.nn.PixelShuffle.html#torch.nn.PixelShuffle)
         # to form a (batch x channel x height*upscale_factor x width*upscale_factor) output
         # 3. Apply convolution and return output
-        x_expanded = x.repeat(1, (self.upscale_factor ** 2), 1, 1)
+        x_expanded = x.repeat(1, int(self.upscale_factor ** 2), 1, 1)
         x_up = self.pixel_shuffle(x_expanded)
         x_out = self.conv(x_up)
         return x_out
@@ -56,10 +56,10 @@ class DownSampleConv2D(torch.jit.ScriptModule):
         # 3. Average across dimension 0, apply convolution and return output
         x_unshuffle = self.pixel_unshuffle(x)
         batch_sz, rc , height, width = x_unshuffle.size()
-        down2 = self.downscale_factor ** 2
-        channels = rc / down2
+        down2 = int(self.downscale_factor ** 2)
+        channels = rc // down2
         x_split = x_unshuffle.view(batch_sz, down2, channels, height, width)
-        x_down = torch.mean(x_split.permute(down2, batch_sz, channels, height, width), dim=0)
+        x_down = torch.mean(x_split.permute(1, 0, 2, 3, 4), dim=0)
         x_out = self.conv(x_down)
         return x_out
 
@@ -126,7 +126,7 @@ class ResBlockDown(torch.jit.ScriptModule):
         # TODO 1.1: Setup the network layers
         conv1 = nn.Conv2d(input_channels, n_filters, kernel_size, padding=1)
         down_conv1 = DownSampleConv2D(n_filters, kernel_size, n_filters, padding=1)
-        down_conv_resid = DownSampleConv2D(n_filters, 1, n_filters)
+        down_conv_resid = DownSampleConv2D(input_channels, 1, n_filters)
         self.resblock = nn.Sequential(nn.ReLU(), conv1, 
                                       nn.ReLU(), down_conv1)
         self.down_resid = down_conv_resid
@@ -253,7 +253,7 @@ class Generator(torch.jit.ScriptModule):
     @torch.jit.script_method
     def forward(self, n_samples: int = 1024):
         # TODO 1.1: Generate n_samples latents and forward through the network.
-        z = torch.normal(mean=0, std=1, size=(n_samples, 128))
+        z = torch.normal(mean=0., std=1., size=(n_samples, 128)).cuda()
         return self.forward_given_samples(z)
 
 

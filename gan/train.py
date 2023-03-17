@@ -99,12 +99,13 @@ def train_model(
         for train_batch in train_loader:
             with torch.cuda.amp.autocast(enabled=amp_enabled):
                 train_batch = train_batch.cuda()
+                batch_dim = train_batch.size(dim=0)
                 ############################ UPDATE DISCRIMINATOR ######################################
                 # TODO 1.2: compute generator, discriminator and interpolated outputs
                 # 1. Compute generator output -> the number of samples must match the batch size.
                 # 2. Compute discriminator output on the train batch.
                 # 3. Compute the discriminator output on the generated data.
-                generations = gen(batch_size)
+                generations = gen(batch_dim)
                 generations = generations.detach()
                 disc_img_output = disc(train_batch)
                 disc_gen_output = disc(generations)

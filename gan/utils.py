@@ -41,13 +41,13 @@ def interpolate_latent_space(gen, path):
     dim_1 = torch.linspace(-1, 1, 10)
     dim_2 = torch.linspace(-1, 1, 10)
     dim1, dim2 = torch.meshgrid([dim_1, dim_2])
-    dim1, dim2 = dim1.view(-1), dim2.transpose(0,1).view(-1)
+    dim1, dim2 = dim1.reshape(-1), dim2.reshape(-1)
+    
+    z = torch.zeros(100, 128).cuda()
+    z[:, 0] = dim1.cuda()
+    z[:, 1] = dim2.cuda()
 
-    z = torch.zeros(100, 128)
-    z[:, 0] = dim1
-    z[:, 1] = dim2
-
-    img = gen(z)
+    img = gen.forward_given_samples(z)
     img = (img + 1) / 2
     torchvision.utils.save_image(img, path)
 

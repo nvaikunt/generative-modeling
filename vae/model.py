@@ -9,6 +9,7 @@ class Encoder(nn.Module):
         super().__init__()
         self.input_shape = input_shape
         self.latent_dim = latent_dim
+        input_channels, height, width, = input_shape
         """
         TODO 2.1 : Fill in self.convs following the given architecture
          Sequential(
@@ -21,11 +22,20 @@ class Encoder(nn.Module):
                 (6): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
             )
         """
+        self.convs = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(32, 64, 3, padding=1, stride=2), nn.ReLU(),
+            nn.Conv2d(64, 128, 3, padding=1, stride=2), nn.ReLU(),
+            nn.Conv2d(128, 256, 3, padding=1, stride=2)
+        )
 
         #TODO 2.1: fill in self.fc, such that output dimension is self.latent_dim
+        self.fc = nn.Linear(256 * (height / 8) * (width / 8), self.latent_dim)
 
     def forward(self, x):
         #TODO 2.1 : forward pass through the network, output should be of dimension : self.latent_dim
+        features = self.convs(x)
+        return self.fc(features)
 
 class VAEEncoder(Encoder):
     def __init__(self, input_shape, latent_dim):
