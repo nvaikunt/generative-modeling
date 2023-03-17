@@ -55,6 +55,7 @@ class DownSampleConv2D(torch.jit.ScriptModule):
         # 2. Then split channel wise into (downscale_factor^2xbatch x channel x height x width) images
         # 3. Average across dimension 0, apply convolution and return output
         x_unshuffle = self.pixel_unshuffle(x)
+
         batch_sz, rc , height, width = x_unshuffle.size()
         down2 = int(self.downscale_factor ** 2)
         channels = rc // down2
@@ -86,9 +87,11 @@ class ResBlockUp(torch.jit.ScriptModule):
     def __init__(self, input_channels, kernel_size=3, n_filters=128):
         super(ResBlockUp, self).__init__()
         # TODO 1.1: Setup the network layers
-        norm1 = nn.BatchNorm2d(input_channels, eps=1e-05, momentum=.1)
+        norm1 = nn.BatchNorm2d(input_channels, eps=1e-05, momentum=.1,
+                               affine=True, track_running_stats=True)
         conv1 = nn.Conv2d(input_channels, n_filters, kernel_size, padding=1, bias=False)
-        norm2 = nn.BatchNorm2d(n_filters, eps=1e-05, momentum=.1)
+        norm2 = nn.BatchNorm2d(n_filters, eps=1e-05, momentum=.1, affine=True, 
+                               track_running_stats=True)
         up_conv1 = UpSampleConv2D(n_filters, kernel_size, n_filters, padding=1)
         up_conv_resid = UpSampleConv2D(input_channels, 1, n_filters)
         self.resblock = nn.Sequential(norm1, nn.ReLU(), conv1, 
@@ -236,8 +239,9 @@ class Generator(torch.jit.ScriptModule):
             ResBlockUp(128, 3, 128), 
             ResBlockUp(128, 3, 128),
             ResBlockUp(128, 3, 128), 
-            nn.BatchNorm2d(128, eps=1e-05, momentum=.1), nn.ReLU(), 
-            nn.Conv2d(128, 3, 3, padding=1), nn.Tanh()
+            nn.BatchNorm2d(128, eps=1e-05, momentum=.1, affine=True, 
+                           track_running_stats=True),
+            nn.ReLU(), nn.Conv2d(128, 3, 3, padding=1), nn.Tanh()
         )
 
     @torch.jit.script_method

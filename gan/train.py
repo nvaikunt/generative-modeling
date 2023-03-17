@@ -127,7 +127,7 @@ def train_model(
             if iters % 5 == 0:
                 with torch.cuda.amp.autocast(enabled=amp_enabled):
                     # TODO 1.2: compute generator and discriminator output on generated data.
-                    gens = gen(batch_size)
+                    gens = gen(batch_dim)
                     disc_gen_output = disc(gens)
                     generator_loss = gen_loss_fn(disc_gen_output)
 
