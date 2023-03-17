@@ -36,7 +36,7 @@ def vae_loss(model, x, beta = 1):
     """
     mu, log_std = model.encoder(x)
     std = torch.exp(log_std)
-    norm = torch.normal(mean=0., std=1., size=mu.size())
+    norm = torch.normal(mean=0., std=1., size=mu.size()).cuda()
 
     z = norm * std + mu
     reconstruction = model.decoder(z)

@@ -30,7 +30,7 @@ class Encoder(nn.Module):
         )
 
         #TODO 2.1: fill in self.fc, such that output dimension is self.latent_dim
-        self.fc = nn.Linear(256 * (height / 8) * (width / 8), self.latent_dim)
+        self.fc = nn.Linear(int(256 * (height / 8) * (width / 8)), self.latent_dim)
 
     def forward(self, x):
         #TODO 2.1 : forward pass through the network, output should be of dimension : self.latent_dim
@@ -43,7 +43,7 @@ class VAEEncoder(Encoder):
         super().__init__(input_shape, latent_dim)
         in_channels, height, width = input_shape
         #TODO 2.4: fill in self.fc, such that output dimension is 2*self.latent_dim
-        self.fc = nn.Linear(256 * (height / 8) * (width / 8), 2 * self.latent_dim)
+        self.fc = nn.Linear(int(256 * (height / 8) * (width / 8)), 2 * self.latent_dim)
 
     def forward(self, x):
         #TODO 2.4: forward pass through the network.
@@ -64,8 +64,8 @@ class Decoder(nn.Module):
         output_channels, height, width = output_shape
 
         #TODO 2.1: fill in self.base_size
-        self.base_size = (256, height / 8, width / 8)
-        self.fc = nn.Linear(self.latent_dim, 256 * (height / 8) * (width / 8))
+        self.base_size = (256, int(height / 8), int(width / 8))
+        self.fc = nn.Linear(self.latent_dim, int(256 * (height / 8) * (width / 8)))
 
         """
         TODO 2.1 : Fill in self.deconvs following the given architecture
@@ -90,7 +90,7 @@ class Decoder(nn.Module):
     def forward(self, z):
         #TODO 2.1: forward pass through the network, first through self.fc, then self.deconvs
         lin_out = self.fc(z)
-        base_imgs = lin_out.reshape(*self.base_size)
+        base_imgs = lin_out.reshape(z.size(dim=0), *self.base_size)
         out = self.deconvs(base_imgs)
         return out
 

@@ -111,6 +111,7 @@ def train_model(
                 disc_gen_output = disc(generations)
 
                 # TODO: 1.5 Compute the interpolated batch and run the discriminator on it.
+                # MIGHT HAVE TO MAKE ALL RANDOM (NOT just one number)
                 eps = torch.rand(1).cuda()
                 interp = eps * train_batch + (1 - eps) * generations
                 disc_interp = disc(interp)
