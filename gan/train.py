@@ -28,14 +28,12 @@ def get_optimizers_and_schedulers(gen, disc):
     # 2. Construct the learning rate schedulers for the generator and discriminator.
     # The learning rate for the discriminator should be decayed to 0 over 500K iterations.
     # The learning rate for the generator should be decayed to 0 over 100K iterations.
+    lambda1 = lambda epoch: (1 - (epoch)/ 500000)
+    lambda2 = lambda epoch: (1 - (epoch)/ 100000)
     optim_discriminator = torch.optim.Adam(disc.parameters(), lr=.0002, betas=(0, .9))
-    scheduler_discriminator = torch.optim.lr_scheduler.LinearLR(optim_discriminator, 
-                                                                start_factor=1, end_factor=0, 
-                                                                total_iters=500000)
+    scheduler_discriminator = torch.optim.lr_scheduler.LambdaLR(optim_discriminator, lr_lambda=lambda1)
     optim_generator = torch.optim.Adam(gen.parameters(), lr=.0002, betas=(0, .9))
-    scheduler_generator = torch.optim.lr_scheduler.LinearLR(optim_generator, 
-                                                                start_factor=1, end_factor=0, 
-                                                                total_iters=100000)
+    scheduler_generator = torch.optim.lr_scheduler.LambdaLR(optim_generator, lr_lambda=lambda2)
     return (
         optim_discriminator,
         scheduler_discriminator,
@@ -106,7 +104,7 @@ def train_model(
                 # 2. Compute discriminator output on the train batch.
                 # 3. Compute the discriminator output on the generated data.
                 generations = gen(batch_dim)
-                generations = generations.detach()
+                # generations = generations.detach()
                 disc_img_output = disc(train_batch)
                 disc_gen_output = disc(generations)
 

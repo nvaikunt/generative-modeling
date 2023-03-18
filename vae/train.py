@@ -45,7 +45,7 @@ def vae_loss(model, x, beta = 1):
     loss_mse = sum_mse(x, reconstruction)
     recon_loss = loss_mse / x.size(dim=0)
 
-    sum_squares = torch.sum(mu ** 2, dim=-1) + torch.sum(std ** 2, dim=-1)
+    sum_squares = torch.sum(mu ** 2, dim=-1) + torch.sum(torch.exp(2 * log_std), dim=-1)
     log_term = torch.sum((2 * log_std) + 1, dim=-1)
     kl_loss = .5 * (sum_squares - log_term)
     kl_loss = kl_loss.mean()
