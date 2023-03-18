@@ -22,6 +22,7 @@ def ae_loss(model, x):
     latent = model.encoder(x)
     reconstruction = model.decoder(latent)
     sum_mse = nn.MSELoss(reduction="sum")
+    
 
     loss_mse = sum_mse(x, reconstruction)
     loss = loss_mse / x.size(dim=0)
@@ -39,17 +40,22 @@ def vae_loss(model, x, beta = 1):
     norm = torch.normal(mean=0., std=1., size=mu.size()).cuda()
 
     z = norm * std + mu
+    # print(z.size())
     reconstruction = model.decoder(z)
     sum_mse = nn.MSELoss(reduction="sum")
 
     loss_mse = sum_mse(x, reconstruction)
     recon_loss = loss_mse / x.size(dim=0)
+    #print(recon_loss)
 
-    sum_squares = torch.sum(mu ** 2, dim=-1) + torch.sum(torch.exp(2 * log_std), dim=-1)
-    log_term = torch.sum((2 * log_std) + 1, dim=-1)
-    kl_loss = .5 * (sum_squares - log_term)
+    sum_square1 = torch.sum(mu ** 2, dim=1) 
+    sum_square2 = torch.sum(torch.exp(2 * log_std), dim=1)
+    log_term = torch.sum((2 * log_std) + 1, dim=1)
+    # print(log_term)
+    kl_loss = .5 * (sum_square1 + sum_square2 - log_term)
     kl_loss = kl_loss.mean()
-    total_loss = recon_loss - beta * kl_loss
+    #print(kl_loss)
+    total_loss = beta * kl_loss + recon_loss
     return total_loss, OrderedDict(recon_loss=recon_loss, kl_loss=kl_loss)
 
 
@@ -83,6 +89,7 @@ def run_train_epoch(model, loss_mode, train_loader, optimizer, beta = 1, grad_cl
         if grad_clip:
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
+        # break
 
     return avg_dict(all_metrics)
 
@@ -101,11 +108,11 @@ def get_val_metrics(model, loss_mode, val_loader):
 
     return avg_dict(all_metrics)
 
-def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, batch_size = 256, latent_size = 256,
+def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 2, batch_size = 256, latent_size = 256,
          target_beta_val = 1, grad_clip=1, lr = 1e-3, eval_interval = 5):
 
     os.makedirs('data/'+ log_dir, exist_ok = True)
-    train_loader, val_loader = get_dataloaders()
+    train_loader, val_loader = get_dataloaders(batch_size=batch_size)
 
     variational = True if loss_mode == 'vae' else False
     model = AEModel(variational, latent_size, input_shape = (3, 32, 32)).cuda()
@@ -124,6 +131,8 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
 
     for epoch in range(num_epochs):
         print('epoch', epoch)
+        if epoch > 20: 
+            break
         train_metrics = run_train_epoch(model, loss_mode, train_loader, optimizer, beta_fn(epoch))
         val_metrics = get_val_metrics(model, loss_mode, val_loader)
         for k in val_metrics.keys():

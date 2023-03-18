@@ -52,7 +52,7 @@ class VAEEncoder(Encoder):
         flattened_features = features.reshape(x.size(dim=0), -1)
         lin_out = self.fc(flattened_features)
         mu, log_std = torch.split(lin_out, 
-                                  split_size_or_sections=self.latent_dim, dim=-1)
+                                  split_size_or_sections=self.latent_dim, dim=1)
         return mu, log_std
 
 
