@@ -11,7 +11,10 @@ from cleanfid import fid as cleanfid
 def get_fid(gen, dataset_name, dataset_resolution, z_dimension, batch_size, num_gen):
     # TODO 3.3: Write a function that samples images from the diffusion model given z
     # NOTE: the output must be [0, 255]
-    gen_fn = gen.sample_given_z
+ 
+    def gen_fn(z):
+        z_shape = (batch_size, gen.channels, dataset_resolution, dataset_resolution)
+        return gen.sample_given_z(z, z_shape)
     score = cleanfid.compute_fid(
         gen=gen_fn,
         dataset_name=dataset_name,
