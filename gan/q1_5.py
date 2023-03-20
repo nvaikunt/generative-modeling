@@ -14,7 +14,7 @@ def compute_discriminator_loss(
     TODO 1.5.1: Implement WGAN-GP loss for discriminator.
     loss = E[D(fake_data)] - E[D(real_data)] + lambda * E[(|| grad wrt interpolated_data (D(interpolated_data))|| - 1)^2]
     """
-    interp_grad = torch.autograd.grad(discrim_interp, interp, 
+    interp_grad = torch.autograd.grad(discrim_interp.sum(), interp, 
                                       retain_graph=True, create_graph=True)[0]
     grad_penalty = (torch.norm(interp_grad, p=2, dim=(1, 2, 3)) - 1) ** 2
     loss = discrim_fake.mean() - discrim_real.mean() + (lamb * grad_penalty.mean())
